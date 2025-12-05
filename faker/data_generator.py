@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 fake = Faker()
 Faker.seed(42)  
 output_dir = "mock_data"
+# Ensure deterministic directories exist for contracts and audits.
 os.makedirs(f"{output_dir}/contracts", exist_ok=True)
 os.makedirs(f"{output_dir}/audits", exist_ok=True)
 
@@ -44,7 +45,7 @@ def generate_suppliers(n=10):
     df = pd.DataFrame(data)
     csv_path = f"{output_dir}/suppliers.csv"
     df.to_csv(csv_path, index=False)
-    print(f"✅ Generated {n} suppliers in {csv_path}")
+    print(f"Generated {n} suppliers in {csv_path}")
     return df
 
 def generate_contract_text(supplier):
@@ -80,6 +81,7 @@ def generate_audit_report(supplier):
     
     # 30% for risk
     has_issue = supplier['sustainability_score'] < 70
+    # Reuse a small set of audit findings so RAG pipelines have predictable patterns to learn from.
     
     risk_text = "No critical non-compliances were observed during the site visit."
     if has_issue:
@@ -111,12 +113,12 @@ This audit was conducted against the Unilever Sustainable Living Plan standards.
 * **Environmental Impact:** {risk_text if "Water" in risk_text or "fire" in risk_text else "Waste management logs are up to date."}
 
 ## Conclusion
-The supplier is graded as: {'**At Risk**' if has_issue else 'Satisfactory'}.
+    The supplier is graded as: {'**At Risk**' if has_issue else 'Satisfactory'}.
 """
     return content
 
 def main():
-    print("🚀 Starting Data Generation for Unilever Demo...")
+    print("Starting data generation for Unilever demo...")
     
     # 1. Generate Supplier
     suppliers_df = generate_suppliers(20)
@@ -133,8 +135,8 @@ def main():
         with open(f"{output_dir}/audits/{row['supplier_id']}_audit.md", "w") as f:
             f.write(audit_md)
             
-    print(f"✅ Generated 20 contracts and 20 audit reports in '{output_dir}/'")
-    print("🎉 Done! You can now ingest this into Milvus.")
+    print(f"Generated 20 contracts and 20 audit reports in '{output_dir}/'")
+    print("Done! You can now ingest this into Milvus.")
 
 if __name__ == "__main__":
     main()

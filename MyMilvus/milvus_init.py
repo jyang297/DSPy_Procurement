@@ -23,11 +23,12 @@ openai_ef = model.dense.OpenAIEmbeddingFunction(
 
 
 # -----------------------------------------------------------
-# 1️⃣ SUPPLIERS COLLECTION (from suppliers.csv)
+# 1) SUPPLIERS COLLECTION (from suppliers.csv)
 # -----------------------------------------------------------
 SUPPLIER_COLLECTION = "suppliers_demo"
 
 if client.has_collection(SUPPLIER_COLLECTION):
+    # Replace any previous demo collection so the run is idempotent.
     client.drop_collection(SUPPLIER_COLLECTION)
 
 client.create_collection(
@@ -39,11 +40,12 @@ client.create_collection(
     enable_dynamic_field=True,
 )
 
-print(f"✅ Created collection: {SUPPLIER_COLLECTION}")
+print(f"Created collection: {SUPPLIER_COLLECTION}")
 
 SUPPLIER_COLLECTION = "suppliers_latest"
 
 if client.has_collection(SUPPLIER_COLLECTION):
+    # Keep a canonical "latest" collection alongside the demo for quick testing.
     client.drop_collection(SUPPLIER_COLLECTION)
 
 client.create_collection(
@@ -55,7 +57,7 @@ client.create_collection(
     enable_dynamic_field=True,
 )
 
-print(f"✅ Created collection: {SUPPLIER_COLLECTION}")
+print(f"Created collection: {SUPPLIER_COLLECTION}")
 
 
 supplier_rows = []
@@ -77,7 +79,7 @@ with open("mock_data/suppliers.csv", newline="", encoding="utf-8") as f:
     # Safety check
     if reader.fieldnames != expected_fields:
         raise ValueError(
-            f"❌ CSV columns do not match expected structure.\n"
+            f"CSV columns do not match expected structure.\n"
             f"Expected: {expected_fields}\n"
             f"Got:      {reader.fieldnames}"
         )
@@ -107,7 +109,7 @@ with open("mock_data/suppliers.csv", newline="", encoding="utf-8") as f:
 
 client.insert(SUPPLIER_COLLECTION, supplier_rows)
 
-print(f"🎉 Inserted {len(supplier_rows)} suppliers\n")
+print(f"Inserted {len(supplier_rows)} suppliers\n")
 
 
 # -----------------------------------------------------------
@@ -127,7 +129,7 @@ client.create_collection(
     enable_dynamic_field=True,
 )
 
-print(f"✅ Created collection: {CONTRACT_COLLECTION}")
+print(f"Created collection: {CONTRACT_COLLECTION}")
 
 
 contract_rows = []
@@ -151,11 +153,11 @@ for idx, filepath in enumerate(contract_files):
 
 client.insert(CONTRACT_COLLECTION, contract_rows)
 
-print(f"🎉 Inserted {len(contract_rows)} contract docs\n")
+print(f"Inserted {len(contract_rows)} contract docs\n")
 
 
 # -----------------------------------------------------------
-# 3️⃣ AUDITS COLLECTION (SUP-XXXX.md)
+# 3) AUDITS COLLECTION (SUP-XXXX.md)
 # -----------------------------------------------------------
 AUDIT_COLLECTION = "audits_latest"
 
@@ -171,7 +173,7 @@ client.create_collection(
     enable_dynamic_field=True,
 )
 
-print(f"✅ Created collection: {AUDIT_COLLECTION}")
+print(f"Created collection: {AUDIT_COLLECTION}")
 
 
 audit_rows = []
@@ -194,7 +196,7 @@ for idx, filepath in enumerate(audit_files):
 
 client.insert(AUDIT_COLLECTION, audit_rows)
 
-print(f"🎉 Inserted {len(audit_rows)} audit docs\n")
+print(f"Inserted {len(audit_rows)} audit docs\n")
 
 
-print("✨ ALL DATA IMPORTED SUCCESSFULLY ✨")
+print("All data imported successfully.")

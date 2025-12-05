@@ -9,6 +9,7 @@ from modules.safeguards import ContractComplianceChecker
 from config.business_rules import COMPLIANCE_RULES
 
 
+# Orchestrates supplier selection, contract checks, and compliance refinement in one DSPy workflow.
 class ProcurementWorkflow(dspy.Module):
     def __init__(self, supplier_r, contract_r, audit_r):
         super().__init__()
@@ -47,6 +48,7 @@ class ProcurementWorkflow(dspy.Module):
         )
 
         spec = refined_spec   # Prediction object
+        # Convert the DSPy prediction to a JSON-serializable dict so downstream modules can access fields.
         spec_json = spec.toDict()
 
         # ------------------------------------------------------
@@ -55,6 +57,7 @@ class ProcurementWorkflow(dspy.Module):
         # ------------------------------------------------------
         rag_query = f"{spec.item_category} {spec.key_specifications} {spec.estimated_budget}"
         supplier_ctx_list = self.supplier_r(rag_query).context
+        # Merge multiple supplier hits into a single prompt-friendly blob.
         supplier_ctx = "\n".join(supplier_ctx_list)
 
         # ------------------------------------------------------
@@ -63,8 +66,9 @@ class ProcurementWorkflow(dspy.Module):
         # So contract RAG must come BEFORE ranking
         # ------------------------------------------------------
         contract_ctx_list = self.contract_r(rag_query).context
+        # Keep the contract context as a multiline string so ranking and compliance can reference clauses.
         contract_ctx = "\n".join(contract_ctx_list)
-
+        
         # ------------------------------------------------------
         # Step 4 — Ranking
         # SupplierRankSignature requires 3 inputs:

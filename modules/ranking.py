@@ -2,6 +2,8 @@
 import dspy
 from modules.signatures import SupplierRankSignature
 
+
+# Wraps a DSPy ChainOfThought call so we can swap the ranking prompt without touching the pipeline.
 class SupplierRankerModule(dspy.Module):
     def __init__(self):
         super().__init__()
