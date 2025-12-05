@@ -7,7 +7,7 @@ import random
 import dspy
 import pandas as pd
 
-class MockSupplierRetriever(dspy.Retrieve):
+class SupplierRetriever(dspy.Retrieve):
     """Retrieve supplier info from suppliers.csv."""
 
     def __init__(self, k=1):
@@ -28,7 +28,7 @@ class MockSupplierRetriever(dspy.Retrieve):
 
 
 
-class MockContractRetriever(dspy.Retrieve):
+class ContractRetriever(dspy.Retrieve):
     def forward(self, query: str, k: int | None = None, **kwargs) -> dspy.Prediction:
         supplier_id = query.strip()
         # I hardcode contract file path for simplicity
@@ -39,7 +39,7 @@ class MockContractRetriever(dspy.Retrieve):
 
 
 
-class MockAuditRetriever(dspy.Retrieve):
+class AuditRetriever(dspy.Retrieve):
     def forward(self, query: str, k: int | None = None, **kwargs) -> dspy.Prediction:
         supplier_id = query.strip()
         # I hardcode audit file path for simplicity

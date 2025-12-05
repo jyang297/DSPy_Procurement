@@ -1,0 +1,158 @@
+# milvus_init_all.py
+import os
+import csv
+from glob import glob
+from pymilvus import MilvusClient, model
+
+# ----------------------------
+# Milvus client init
+# ----------------------------
+client = MilvusClient(
+    uri="http://localhost:19530",
+    user="root",
+    password="Milvus"
+)
+
+# ----------------------------
+# Embedding model init
+# ----------------------------
+openai_ef = model.dense.OpenAIEmbeddingFunction(
+    model_name="text-embedding-3-small",
+    api_key=os.environ["OPENAI_API_KEY"],
+)
+
+
+# -----------------------------------------------------------
+# 1️⃣ SUPPLIERS COLLECTION (from suppliers.csv)
+# -----------------------------------------------------------
+SUPPLIER_COLLECTION = "suppliers_latest"
+
+if client.has_collection(SUPPLIER_COLLECTION):
+    client.drop_collection(SUPPLIER_COLLECTION)
+
+client.create_collection(
+    collection_name=SUPPLIER_COLLECTION,
+    dimension=1536,
+    vector_field="vector",
+    primary_field="id",
+    id_type="int",
+    enable_dynamic_field=True,
+)
+
+print(f"✅ Created collection: {SUPPLIER_COLLECTION}")
+
+
+supplier_rows = []
+
+with open("mock_data/suppliers.csv", newline="", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+
+    for i, row in enumerate(reader):
+        supplier_id = row["supplier_id"]
+        description = row["description"]  # or combine multiple fields
+
+        emb = openai_ef.encode_documents([description])[0]
+
+        supplier_rows.append({
+            "id": i,
+            "supplier_id": supplier_id,
+            "description": description,
+            "vector": emb,
+        })
+
+client.insert(
+    SUPPLIER_COLLECTION,
+    supplier_rows
+)
+
+print(f"🎉 Inserted {len(supplier_rows)} suppliers\n")
+
+
+# -----------------------------------------------------------
+# 2 CONTRACTS COLLECTION (SUP-XXXX.md)
+# -----------------------------------------------------------
+CONTRACT_COLLECTION = "contracts_latest"
+
+if client.has_collection(CONTRACT_COLLECTION):
+    client.drop_collection(CONTRACT_COLLECTION)
+
+client.create_collection(
+    collection_name=CONTRACT_COLLECTION,
+    dimension=1536,
+    vector_field="vector",
+    primary_field="id",
+    id_type="int",
+    enable_dynamic_field=True,
+)
+
+print(f"✅ Created collection: {CONTRACT_COLLECTION}")
+
+
+contract_rows = []
+contract_files = glob("mock_data/contracts/SUP-*.md")
+
+for idx, filepath in enumerate(contract_files):
+    supplier_id = os.path.basename(filepath).split(".")[0]  # SUP-1001
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        content = f.read().strip()
+
+    # embed contract text
+    emb = openai_ef.encode_documents([content])[0]
+
+    contract_rows.append({
+        "id": idx,
+        "supplier_id": supplier_id,
+        "text": content,
+        "vector": emb,
+    })
+
+client.insert(CONTRACT_COLLECTION, contract_rows)
+
+print(f"🎉 Inserted {len(contract_rows)} contract docs\n")
+
+
+# -----------------------------------------------------------
+# 3️⃣ AUDITS COLLECTION (SUP-XXXX.md)
+# -----------------------------------------------------------
+AUDIT_COLLECTION = "audits_latest"
+
+if client.has_collection(AUDIT_COLLECTION):
+    client.drop_collection(AUDIT_COLLECTION)
+
+client.create_collection(
+    collection_name=AUDIT_COLLECTION,
+    dimension=1536,
+    vector_field="vector",
+    primary_field="id",
+    id_type="int",
+    enable_dynamic_field=True,
+)
+
+print(f"✅ Created collection: {AUDIT_COLLECTION}")
+
+
+audit_rows = []
+audit_files = glob("mock_data/audits/SUP-*.md")
+
+for idx, filepath in enumerate(audit_files):
+    supplier_id = os.path.basename(filepath).split(".")[0]
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        content = f.read().strip()
+
+    emb = openai_ef.encode_documents([content])[0]
+
+    audit_rows.append({
+        "id": idx,
+        "supplier_id": supplier_id,
+        "text": content,
+        "vector": emb,
+    })
+
+client.insert(AUDIT_COLLECTION, audit_rows)
+
+print(f"🎉 Inserted {len(audit_rows)} audit docs\n")
+
+
+print("✨ ALL DATA IMPORTED SUCCESSFULLY ✨")

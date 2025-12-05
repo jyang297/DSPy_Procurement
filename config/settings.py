@@ -2,7 +2,7 @@
 import dspy
 import os
 from dotenv import load_dotenv
-from retrievers import MockSupplierRetriever, MockContractRetriever, MockAuditRetriever
+from retrievers import SupplierRetriever, ContractRetriever, AuditRetriever
 
 load_dotenv()
 
@@ -20,13 +20,16 @@ def configure_dspy(
 
     # -------- RM --------
     # DSPy only allows 1 default RM → Assign ContractRetriever as default
-    default_rm = MockContractRetriever(k=k)
+    default_rm = ContractRetriever(k=k)
 
     dspy.settings.configure(lm=lm, rm=default_rm)
+    
+    # -------- Retrievers --------
+    
 
     # Return the retrievers so pipeline.py can use them
     return {
-        "supplier_r": MockSupplierRetriever(k=k),
-        "contract_r": MockContractRetriever(k=k),
-        "audit_r": MockAuditRetriever(k=k),
+        "supplier_r": SupplierRetriever(k=k),
+        "contract_r": ContractRetriever(k=k),
+        "audit_r": AuditRetriever(k=k),
     }
