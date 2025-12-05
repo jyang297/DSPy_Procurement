@@ -15,7 +15,7 @@ This project implements an end-to-end procurement decision workflow powered by:
 4. Custom reward functions for schema compliance and budget extraction
 
 # Flowmap
-[Flowmap](demo/flowmap_0.1.0)
+[Flowmap](demo/flowmap_0.1.0.png)
 
 # Quick Start
 
