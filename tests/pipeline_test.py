@@ -23,7 +23,7 @@ supplier_r = MilvusRetriever(
     uri=MILVUS_URI,
     user=USERNAME,
     password=PASSWORD,
-    collection="suppliers_latest",
+    collection="suppliers_demo",
     top_k=3,
 )
 
@@ -31,7 +31,7 @@ contract_r = MilvusRetriever(
     uri=MILVUS_URI,
     user=USERNAME,
     password=PASSWORD,
-    collection="contracts_latest",
+    collection="contracts_demo",
     top_k=3,
 )
 
@@ -39,7 +39,7 @@ audit_r = MilvusRetriever(
     uri=MILVUS_URI,
     user=USERNAME,
     password=PASSWORD,
-    collection="audits_latest",
+    collection="audits_demo",
     top_k=3,
 )
 
