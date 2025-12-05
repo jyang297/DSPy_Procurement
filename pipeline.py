@@ -56,6 +56,9 @@ class ProcurementWorkflow(dspy.Module):
         # Query Milvus using structured requirement fields
         # ------------------------------------------------------
         rag_query = f"{spec.item_category} {spec.key_specifications} {spec.estimated_budget}"
+        print("----------------------------------")
+        print("RAG Query:", rag_query)
+        print("----------------------------------")
         supplier_ctx_list = self.supplier_r(rag_query).context
         # Merge multiple supplier hits into a single prompt-friendly blob.
         supplier_ctx = "\n".join(supplier_ctx_list)

@@ -1,6 +1,9 @@
 # modules/refinement.py
 from typing import Any
 
+# TODO: The reward functions should be replaced with more sophisticated logic as needed.
+# They currently serve as simple examples. Just for formation and testing.
+# You would not like one out of budguet right?
 
 # Reward: prefer generations that surface a usable budget rather than vague placeholders.
 def reward_budget_present(inputs: dict[str, Any], pred) -> float:
