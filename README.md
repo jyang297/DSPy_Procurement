@@ -1,7 +1,9 @@
 # DSPy Procurement Agent 
 
 > Jiaqi Yang: jyang297@uottawa.ca
+> 
 > Linkedin: https://www.linkedin.com/in/jiaqi-yang-b3014424b/
+> 
 > Portfolio: Incoming!
 
 This project implements an end-to-end procurement decision workflow powered by:
