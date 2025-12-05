@@ -1,50 +1,37 @@
-# config/retrievers.py
+# MyMilvus/milvus_retrievers.py
 import dspy
-import pandas as pd
-import os
-import random
+from pymilvus import MilvusClient, model
+import os 
 
-import dspy
-import pandas as pd
+openai_ef = model.dense.OpenAIEmbeddingFunction(
+    model_name="text-embedding-3-small",
+    api_key=os.environ["OPENAI_API_KEY"],
+)
 
-class SupplierRetriever(dspy.Retrieve):
-    """Retrieve supplier info from suppliers.csv."""
+class MilvusRetriever(dspy.Retrieve):
+    def __init__(self, uri, user, password, collection, top_k=3):
+        super().__init__(k=top_k)
+        self.client = MilvusClient(uri=uri, user=user, password=password)
+        self.collection = collection
 
-    def __init__(self, k=1):
-        super().__init__(k=k)
-        self.df = pd.read_csv("mock_data/suppliers.csv")
+    def forward(self, query: str, k=None, **kwargs) -> dspy.Prediction:
+        k = k or self.k
 
-    def forward(self, query: str, k: int | None = None, **kwargs) -> dspy.Prediction:
-        """query = user text, but we try to match supplier_id."""
-        search_key = query.split()[0].lower()
+        # Embed query using OpenAIEmbedding
+        query_emb = openai_ef.encode_queries([query])[0]
 
-        matches = self.df[self.df["supplier_id"].str.lower().str.contains(search_key)]
+        # Search Milvus
+        hits = self.client.search(
+            collection_name=self.collection,
+            data=[query_emb],
+            limit=k,
+            output_fields=["text", "supplier_id"],
+        )[0] 
 
-        if matches.empty:
-            return dspy.Prediction(context=["[NO SUPPLIER FOUND]"])
+        contexts = []
+        for h in hits:
+            entity = h["entity"]
+            txt = entity.get("text", "")
+            contexts.append(txt)
 
-        row = matches.iloc[0].to_dict()
-        return dspy.Prediction(context=[str(row)])
-
-
-
-class ContractRetriever(dspy.Retrieve):
-    def forward(self, query: str, k: int | None = None, **kwargs) -> dspy.Prediction:
-        supplier_id = query.strip()
-        # I hardcode contract file path for simplicity
-        path = f"mock_data/contracts/{supplier_id}_contract.md"
-        if not os.path.exists(path):
-            return dspy.Prediction(context=["[NO CONTRACT FOUND]"])
-        return dspy.Prediction(context=[open(path).read()])
-
-
-
-class AuditRetriever(dspy.Retrieve):
-    def forward(self, query: str, k: int | None = None, **kwargs) -> dspy.Prediction:
-        supplier_id = query.strip()
-        # I hardcode audit file path for simplicity
-        path = f"mock_data/audits/{supplier_id}_audit.md"
-        if not os.path.exists(path):
-            return dspy.Prediction(context=["[NO AUDIT FOUND]"])
-        return dspy.Prediction(context=[open(path).read()])
-
+        return dspy.Prediction(context=contexts)

@@ -25,6 +25,22 @@ openai_ef = model.dense.OpenAIEmbeddingFunction(
 # -----------------------------------------------------------
 # 1️⃣ SUPPLIERS COLLECTION (from suppliers.csv)
 # -----------------------------------------------------------
+SUPPLIER_COLLECTION = "suppliers_demo"
+
+if client.has_collection(SUPPLIER_COLLECTION):
+    client.drop_collection(SUPPLIER_COLLECTION)
+
+client.create_collection(
+    collection_name=SUPPLIER_COLLECTION,
+    dimension=1536,
+    vector_field="vector",
+    primary_field="id",
+    id_type="int",
+    enable_dynamic_field=True,
+)
+
+print(f"✅ Created collection: {SUPPLIER_COLLECTION}")
+
 SUPPLIER_COLLECTION = "suppliers_latest"
 
 if client.has_collection(SUPPLIER_COLLECTION):
@@ -47,10 +63,39 @@ supplier_rows = []
 with open("mock_data/suppliers.csv", newline="", encoding="utf-8") as f:
     reader = csv.DictReader(f)
 
+    expected_fields = [
+        "supplier_id",
+        "name",
+        "category",
+        "region",
+        "contact_email",
+        "sustainability_score",
+        "contract_active",
+        "last_audit_date"
+    ]
+
+    # Safety check
+    if reader.fieldnames != expected_fields:
+        raise ValueError(
+            f"❌ CSV columns do not match expected structure.\n"
+            f"Expected: {expected_fields}\n"
+            f"Got:      {reader.fieldnames}"
+        )
+
     for i, row in enumerate(reader):
         supplier_id = row["supplier_id"]
-        description = row["description"]  # or combine multiple fields
 
+        # Build a structured description for embeddings
+        description = (
+            f"Supplier {row['name']} (ID {row['supplier_id']}) operates in the {row['category']} domain, "
+            f"serving customers in the {row['region']} region. "
+            f"Contact email: {row['contact_email']}. "
+            f"Sustainability score: {row['sustainability_score']}. "
+            f"Contract active: {row['contract_active']}. "
+            f"Last audit date: {row['last_audit_date']}."
+        )
+
+        # Embed description using Milvus 2.6.4 embedding API
         emb = openai_ef.encode_documents([description])[0]
 
         supplier_rows.append({
@@ -60,10 +105,7 @@ with open("mock_data/suppliers.csv", newline="", encoding="utf-8") as f:
             "vector": emb,
         })
 
-client.insert(
-    SUPPLIER_COLLECTION,
-    supplier_rows
-)
+client.insert(SUPPLIER_COLLECTION, supplier_rows)
 
 print(f"🎉 Inserted {len(supplier_rows)} suppliers\n")
 

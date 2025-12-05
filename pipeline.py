@@ -6,80 +6,124 @@ from modules.analysis import RequirementAnalyzer
 from modules.ranking import SupplierRankerModule
 from modules.risk_mining import RiskMiner
 from modules.safeguards import ContractComplianceChecker
+from config.business_rules import COMPLIANCE_RULES
 
 
 class ProcurementWorkflow(dspy.Module):
     def __init__(self, supplier_r, contract_r, audit_r):
         super().__init__()
-        # 需求→结构化
+        self.supplier_r = supplier_r
+        self.contract_r = contract_r
+        self.audit_r = audit_r
         self.analyzer = RequirementAnalyzer()
-        # 供应商选择（用 supplier retriever + contract retriever）
-        self.ranker = SupplierRankerModule(supplier_r, contract_r)
-        # 风险挖掘（用 audit retriever + supplier retriever）
-        self.risk_miner = RiskMiner(audit_r, supplier_r)
-        # 合规判断（LLM 模块，本身不负责 safeguard）
-        self.compliance_checker = ContractComplianceChecker()
+        self.ranker = SupplierRankerModule()
+        self.risk_miner = RiskMiner()
+        self.compliance = ContractComplianceChecker()
 
     def forward(self, raw_request: str):
-        # -------------------------------
-        # Step 1: 需求规范 + Refine safeguard（预算必须存在）
-        # -------------------------------
+        """
+        Complete procurement workflow:
+        1) Requirement refinement
+        2) Supplier RAG
+        3) Contract RAG
+        4) Supplier Ranking
+        5) Audit RAG + Risk Mining
+        6) Compliance refinement
+        7) Final approval decision
+        """
+
+        # ------------------------------------------------------
+        # Step 1 — Refine Requirement Specification
+        # ------------------------------------------------------
+        # We run 4 candidates and choose best one based on reward_budget_present
         refined_spec = dspy.Refine(
-            module=self.analyzer,          # RequirementAnalyzer 模块
-            N=4,                           # 最多采样 4 次
+            module=self.analyzer,
+            N=4,
             reward_fn=reward_budget_present,
-            threshold=0.0,                 # >0 就算“可接受”
+            threshold=0.0,
         )(
             raw_request=raw_request,
-            feedback="none",               # 你的 Signature 里有 feedback 字段
+            feedback="none"
         )
 
-        spec_json = refined_spec.dump()
+        spec = refined_spec   # Prediction object
+        spec_json = spec.toDict()
 
-        # -------------------------------
-        # Step 2: 供应商排序 / 选择
-        # -------------------------------
-        ranked = self.ranker(spec_json)
+        # ------------------------------------------------------
+        # Step 2 — Supplier RAG
+        # Query Milvus using structured requirement fields
+        # ------------------------------------------------------
+        rag_query = f"{spec.item_category} {spec.key_specifications} {spec.estimated_budget}"
+        supplier_ctx_list = self.supplier_r(rag_query).context
+        supplier_ctx = "\n".join(supplier_ctx_list)
+
+        # ------------------------------------------------------
+        # Step 3 — Contract RAG
+        # Contract context is REQUIRED by SupplierRankSignature
+        # So contract RAG must come BEFORE ranking
+        # ------------------------------------------------------
+        contract_ctx_list = self.contract_r(rag_query).context
+        contract_ctx = "\n".join(contract_ctx_list)
+
+        # ------------------------------------------------------
+        # Step 4 — Ranking
+        # SupplierRankSignature requires 3 inputs:
+        #   - specification
+        #   - supplier_context
+        #   - contract_context
+        # ------------------------------------------------------
+        ranked = self.ranker(
+            specification=spec_json,
+            supplier_context=supplier_ctx,
+            contract_context=contract_ctx,
+        )
+
         supplier_id = ranked.top_supplier_id
 
-        # -------------------------------
-        # Step 3: 风险挖掘
-        # -------------------------------
-        risk = self.risk_miner(supplier_id)
+        # ------------------------------------------------------
+        # Step 5 — Audit RAG + Risk Mining
+        # RiskMiningSignature requires:
+        #   supplier_id, supplier_info, audit_context
+        # ------------------------------------------------------
+        supplier_info = self.supplier_r(supplier_id).context[0]
+        audit_info = self.audit_r(supplier_id).context[0]
 
-        # -------------------------------
-        # Step 4: 合同草案 + 合规检查（再用 Refine 做 safeguard）
-        # -------------------------------
-        draft_terms = (
-            f"Supplier: {supplier_id}\n"
-            f"Budget: {refined_spec.estimated_budget}\n"
-            f"Risk summary: {risk.risk_summary}\n"
+        risk = self.risk_miner(
+            supplier_id=supplier_id,
+            supplier_info=supplier_info,
+            audit_context=audit_info,
         )
 
-        refined_compliance = dspy.Refine(
-            module=self.compliance_checker,   # ContractComplianceChecker 模块
+        # ------------------------------------------------------
+        # Step 6 — Compliance Refinement
+        # Use Refine to enforce schema correctness & compliance rules
+        # ------------------------------------------------------
+        draft_terms = contract_ctx
+
+        compliance = dspy.Refine(
+            module=self.compliance,
             N=4,
             reward_fn=reward_compliance_schema,
             threshold=0.0,
         )(
             draft_terms=draft_terms,
+            compliance_rules=COMPLIANCE_RULES,
         )
 
-        # -------------------------------
-        # Step 5: 最终决策输出
-        # -------------------------------
-        if not refined_compliance.is_compliant:
+        # ------------------------------------------------------
+        # Step 7 — Make decision
+        # ------------------------------------------------------
+        if not compliance.is_compliant:
             return {
                 "status": "REQUIRES_REVIEW",
+                "reason": compliance.rejection_reason,
                 "supplier": supplier_id,
-                "reason": refined_compliance.rejection_reason,
                 "risk_score": risk.risk_score,
-                "risk_summary": risk.risk_summary,
             }
 
         return {
             "status": "APPROVED",
             "supplier": supplier_id,
-            "specification": spec_json,
             "risk_summary": risk.risk_summary,
+            "risk_score": risk.risk_score,
         }

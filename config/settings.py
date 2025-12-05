@@ -2,7 +2,7 @@
 import dspy
 import os
 from dotenv import load_dotenv
-from retrievers import SupplierRetriever, ContractRetriever, AuditRetriever
+from config.retrievers import MilvusRetriever
 
 load_dotenv()
 
@@ -20,16 +20,34 @@ def configure_dspy(
 
     # -------- RM --------
     # DSPy only allows 1 default RM → Assign ContractRetriever as default
-    default_rm = ContractRetriever(k=k)
+    default_rm = None # we have set up retrievers for following different scenarios
 
     dspy.settings.configure(lm=lm, rm=default_rm)
     
     # -------- Retrievers --------
-    
+    supplier_r = MilvusRetriever(
+        uri="http://localhost:19530",
+        user="root",
+        password="Milvus",
+        collection="suppliers_latest",
+        top_k=3,
+    )
+
+    contract_r = MilvusRetriever(
+        uri="http://localhost:19530",
+        user="root",
+        password="Milvus",
+        collection="contracts_latest",
+        top_k=3,
+    )
+
+    audit_r = MilvusRetriever(
+        uri="http://localhost:19530",
+        user="root",
+        password="Milvus",
+        collection="audits_latest",
+        top_k=3,
+    )
 
     # Return the retrievers so pipeline.py can use them
-    return {
-        "supplier_r": SupplierRetriever(k=k),
-        "contract_r": ContractRetriever(k=k),
-        "audit_r": AuditRetriever(k=k),
-    }
+    return supplier_r, contract_r, audit_r
