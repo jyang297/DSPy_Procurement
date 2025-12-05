@@ -57,13 +57,16 @@ agent = ProcurementWorkflow(
 # -------------------------------
 # 4. Test query
 # -------------------------------
-raw_request = """
-We need IT servers for our Montreal data center upgrade.
-Expected budget: around 40k-60k.
-Delivery must be within 5 weeks.
-"""
+if __name__ == "__main__":
+    raw_request = input("Enter procurement request: ")
+    if raw_request.strip() == "":
+        raw_request = """
+        We need IT servers for our Montreal data center upgrade.
+        Expected budget: around 40k-60k.
+        Delivery must be within 5 weeks.
+        """
 
-result = agent(raw_request)
+    result = agent(raw_request)
 
-print("\n====== FINAL RESULT ======\n")
-print(result)
+    print("\n====== FINAL RESULT ======\n")
+    print(result)
