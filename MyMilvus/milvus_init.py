@@ -10,7 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-from config.milvus_collections import load_collection_names
+from MyMilvus.milvus_collections import load_collection_names
 
 # ----------------------------
 # Milvus client init

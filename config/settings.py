@@ -3,7 +3,7 @@ import dspy
 import os
 from dotenv import load_dotenv
 from config.retrievers import MilvusRetriever
-from config.milvus_collections import load_collection_names
+from MyMilvus.milvus_collections import load_collection_names
 
 load_dotenv()
 
