@@ -3,6 +3,7 @@ import dspy
 import os
 from dotenv import load_dotenv
 from config.retrievers import MilvusRetriever
+from config.milvus_collections import load_collection_names
 
 load_dotenv()
 
@@ -23,13 +24,14 @@ def configure_dspy(
     default_rm = None # we have set up retrievers for following different scenarios
 
     dspy.settings.configure(lm=lm, rm=default_rm)
-    
+
     # -------- Retrievers --------
+    collections = load_collection_names()
     supplier_r = MilvusRetriever(
         uri="http://localhost:19530",
         user="root",
         password="Milvus",
-        collection="suppliers_latest",
+        collection=collections["suppliers"],
         top_k=3,
     )
 
@@ -37,7 +39,7 @@ def configure_dspy(
         uri="http://localhost:19530",
         user="root",
         password="Milvus",
-        collection="contracts_latest",
+        collection=collections["contracts"],
         top_k=3,
     )
 
@@ -45,7 +47,7 @@ def configure_dspy(
         uri="http://localhost:19530",
         user="root",
         password="Milvus",
-        collection="audits_latest",
+        collection=collections["audits"],
         top_k=3,
     )
 

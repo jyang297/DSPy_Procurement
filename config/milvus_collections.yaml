@@ -1,0 +1,4 @@
+collections:
+  suppliers: suppliers_demo
+  contracts: contracts_demo
+  audits: audits_demo

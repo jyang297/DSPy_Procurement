@@ -1,8 +1,16 @@
 # milvus_init_all.py
-import os
 import csv
+import os
+import sys
 from glob import glob
+from pathlib import Path
 from pymilvus import MilvusClient, model
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from config.milvus_collections import load_collection_names
 
 # ----------------------------
 # Milvus client init
@@ -21,31 +29,16 @@ openai_ef = model.dense.OpenAIEmbeddingFunction(
     api_key=os.environ["OPENAI_API_KEY"],
 )
 
+collections = load_collection_names()
+
 
 # -----------------------------------------------------------
 # 1) SUPPLIERS COLLECTION (from suppliers.csv)
 # -----------------------------------------------------------
-SUPPLIER_COLLECTION = "suppliers_demo"
+SUPPLIER_COLLECTION = collections["suppliers"]
 
 if client.has_collection(SUPPLIER_COLLECTION):
     # Replace any previous demo collection so the run is idempotent.
-    client.drop_collection(SUPPLIER_COLLECTION)
-
-client.create_collection(
-    collection_name=SUPPLIER_COLLECTION,
-    dimension=1536,
-    vector_field="vector",
-    primary_field="id",
-    id_type="int",
-    enable_dynamic_field=True,
-)
-
-print(f"Created collection: {SUPPLIER_COLLECTION}")
-
-SUPPLIER_COLLECTION = "suppliers_latest"
-
-if client.has_collection(SUPPLIER_COLLECTION):
-    # Keep a canonical "latest" collection alongside the demo for quick testing.
     client.drop_collection(SUPPLIER_COLLECTION)
 
 client.create_collection(
@@ -115,7 +108,7 @@ print(f"Inserted {len(supplier_rows)} suppliers\n")
 # -----------------------------------------------------------
 # 2 CONTRACTS COLLECTION (SUP-XXXX.md)
 # -----------------------------------------------------------
-CONTRACT_COLLECTION = "contracts_latest"
+CONTRACT_COLLECTION = collections["contracts"]
 
 if client.has_collection(CONTRACT_COLLECTION):
     client.drop_collection(CONTRACT_COLLECTION)
@@ -159,7 +152,7 @@ print(f"Inserted {len(contract_rows)} contract docs\n")
 # -----------------------------------------------------------
 # 3) AUDITS COLLECTION (SUP-XXXX.md)
 # -----------------------------------------------------------
-AUDIT_COLLECTION = "audits_latest"
+AUDIT_COLLECTION = collections["audits"]
 
 if client.has_collection(AUDIT_COLLECTION):
     client.drop_collection(AUDIT_COLLECTION)
