@@ -15,4 +15,4 @@ COMPLIANCE_RULES = (
     "3. No contract should exceed the stated budget by more than 10% without executive approval."
 )
 
-REQUIRED_SPEC_KEYS = ['item_category', 'key_specifications', 'estimated_budget']
+REQUIRED_SPEC_KEYS = ["item_category", "key_specifications", "estimated_budget"]

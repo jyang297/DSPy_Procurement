@@ -1,12 +1,12 @@
 # pipeline.py
 import dspy
 
-from modules.refinement import reward_budget_present, reward_compliance_schema
+from config.business_rules import COMPLIANCE_RULES
 from modules.analysis import RequirementAnalyzer
 from modules.ranking import SupplierRankerModule
+from modules.refinement import reward_budget_present, reward_compliance_schema
 from modules.risk_mining import RiskMiner
 from modules.safeguards import ContractComplianceChecker
-from config.business_rules import COMPLIANCE_RULES
 
 
 # Orchestrates supplier selection, contract checks, and compliance refinement in one DSPy workflow.
@@ -42,12 +42,9 @@ class ProcurementWorkflow(dspy.Module):
             N=4,
             reward_fn=reward_budget_present,
             threshold=0.0,
-        )(
-            raw_request=raw_request,
-            feedback="none"
-        )
+        )(raw_request=raw_request, feedback="none")
 
-        spec = refined_spec   # Prediction object
+        spec = refined_spec  # Prediction object
         # Convert the DSPy prediction to a JSON-serializable dict so downstream modules can access fields.
         spec_json = spec.toDict()
 
@@ -71,7 +68,7 @@ class ProcurementWorkflow(dspy.Module):
         contract_ctx_list = self.contract_r(rag_query).context
         # Keep the contract context as a multiline string so ranking and compliance can reference clauses.
         contract_ctx = "\n".join(contract_ctx_list)
-        
+
         # ------------------------------------------------------
         # Step 4 — Ranking
         # SupplierRankSignature requires 3 inputs:

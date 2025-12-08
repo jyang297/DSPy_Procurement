@@ -1,25 +1,20 @@
 # milvus_init_all.py
 import csv
 import os
-import sys
 from glob import glob
 from pathlib import Path
+
 from pymilvus import MilvusClient, model
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.append(str(PROJECT_ROOT))
-
 from MyMilvus.milvus_collections import load_collection_names
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 
 # ----------------------------
 # Milvus client init
 # ----------------------------
-client = MilvusClient(
-    uri="http://localhost:19530",
-    user="root",
-    password="Milvus"
-)
+client = MilvusClient(uri="http://localhost:19530", user="root", password="Milvus")
 
 # ----------------------------
 # Embedding model init
@@ -66,7 +61,7 @@ with open("mock_data/suppliers.csv", newline="", encoding="utf-8") as f:
         "contact_email",
         "sustainability_score",
         "contract_active",
-        "last_audit_date"
+        "last_audit_date",
     ]
 
     # Safety check
@@ -93,12 +88,14 @@ with open("mock_data/suppliers.csv", newline="", encoding="utf-8") as f:
         # Embed description using Milvus 2.6.4 embedding API
         emb = openai_ef.encode_documents([description])[0]
 
-        supplier_rows.append({
-            "id": i,
-            "supplier_id": supplier_id,
-            "description": description,
-            "vector": emb,
-        })
+        supplier_rows.append(
+            {
+                "id": i,
+                "supplier_id": supplier_id,
+                "description": description,
+                "vector": emb,
+            }
+        )
 
 client.insert(SUPPLIER_COLLECTION, supplier_rows)
 
@@ -137,12 +134,14 @@ for idx, filepath in enumerate(contract_files):
     # embed contract text
     emb = openai_ef.encode_documents([content])[0]
 
-    contract_rows.append({
-        "id": idx,
-        "supplier_id": supplier_id,
-        "text": content,
-        "vector": emb,
-    })
+    contract_rows.append(
+        {
+            "id": idx,
+            "supplier_id": supplier_id,
+            "text": content,
+            "vector": emb,
+        }
+    )
 
 client.insert(CONTRACT_COLLECTION, contract_rows)
 
@@ -180,12 +179,14 @@ for idx, filepath in enumerate(audit_files):
 
     emb = openai_ef.encode_documents([content])[0]
 
-    audit_rows.append({
-        "id": idx,
-        "supplier_id": supplier_id,
-        "text": content,
-        "vector": emb,
-    })
+    audit_rows.append(
+        {
+            "id": idx,
+            "supplier_id": supplier_id,
+            "text": content,
+            "vector": emb,
+        }
+    )
 
 client.insert(AUDIT_COLLECTION, audit_rows)
 

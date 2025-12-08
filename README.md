@@ -51,6 +51,18 @@ python ./tests/pipeline_test.py
 
 You can type your own task or just leave it alone for a demo task.
 
+# Lint & Tests
+
+Run the static checks and fast unit tests (no external services needed):
+
+```bash
+uv run ruff check .
+uv run black --check .
+uv run pytest
+```
+
+The automated pytest run is limited to the lightweight cases in `tests/unit/` so it skips the interactive `tests/pipeline_test.py` demo.
+
 # Thanks
 
 If you have any problem, feel free to reach me. Happy to discuss any problem. 

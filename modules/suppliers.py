@@ -4,7 +4,9 @@ import dspy
 # Signature describing the inputs/outputs needed to rank suppliers against a refined requirement.
 class SupplierRankSignature(dspy.Signature):
     # Input fields
-    specification: str = dspy.InputField(desc="Structured procurement requirements including category, key specs, budget, and delivery date.")
+    specification: str = dspy.InputField(
+        desc="Structured procurement requirements including category, key specs, budget, and delivery date."
+    )
     supplier_context: str = dspy.InputField(
         desc=(
             "Retrieved supplier information. MUST include the supplier_id field in the format "

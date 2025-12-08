@@ -1,15 +1,12 @@
-import os
-import dspy
 
-from config.settings import configure_dspy  
 from config.retrievers import MilvusRetriever
+from config.settings import configure_dspy
 from pipeline import ProcurementWorkflow
-
 
 # -------------------------------
 # 1. Configure DSPy (LM + embedding)
 # -------------------------------
-configure_dspy()  
+configure_dspy()
 
 
 # -------------------------------

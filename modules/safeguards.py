@@ -1,6 +1,8 @@
 # modules/safeguards.py
 import dspy
+
 from modules.signatures import ComplianceSignature
+
 
 class ContractComplianceChecker(dspy.Module):
     def __init__(self):

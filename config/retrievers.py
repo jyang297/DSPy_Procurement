@@ -1,12 +1,14 @@
 # MyMilvus/milvus_retrievers.py
+import os
+
 import dspy
 from pymilvus import MilvusClient, model
-import os 
 
 openai_ef = model.dense.OpenAIEmbeddingFunction(
     model_name="text-embedding-3-small",
     api_key=os.environ["OPENAI_API_KEY"],
 )
+
 
 class MilvusRetriever(dspy.Retrieve):
     def __init__(self, uri, user, password, collection, top_k=3):
@@ -26,7 +28,7 @@ class MilvusRetriever(dspy.Retrieve):
             data=[query_emb],
             limit=k,
             output_fields=["text", "supplier_id"],
-        )[0] 
+        )[0]
 
         contexts = []
         for h in hits:

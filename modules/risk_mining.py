@@ -1,6 +1,8 @@
 # modules/risk_mining.py
 import dspy
+
 from modules.signatures import RiskMiningSignature
+
 
 class RiskMiner(dspy.Module):
     def __init__(self):

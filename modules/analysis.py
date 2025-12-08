@@ -1,6 +1,8 @@
 # modules/analysis.py
 import dspy
+
 from modules.signatures import RequirementSpecSignature
+
 
 class RequirementAnalyzer(dspy.Module):
     def __init__(self):

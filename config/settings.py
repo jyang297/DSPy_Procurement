@@ -1,18 +1,20 @@
 # config/settings.py
-import dspy
 import os
+
+import dspy
 from dotenv import load_dotenv
+
 from config.retrievers import MilvusRetriever
 from MyMilvus.milvus_collections import load_collection_names
 
 load_dotenv()
 
+
 def configure_dspy(
-        lm_model: str = "openai/gpt-4o",
-        k: int = 3,
+    lm_model: str = "openai/gpt-4o",
+    k: int = 3,
 ):
     """Configure DSPy with modern LM and custom RM."""
-
 
     if "gpt" in lm_model:
         lm = dspy.LM(model=lm_model, api_key=os.getenv("OPENAI_API_KEY"))
@@ -21,7 +23,7 @@ def configure_dspy(
 
     # -------- RM --------
     # DSPy only allows 1 default RM → Assign ContractRetriever as default
-    default_rm = None # we have set up retrievers for following different scenarios
+    default_rm = None  # we have set up retrievers for following different scenarios
 
     dspy.settings.configure(lm=lm, rm=default_rm)
 
